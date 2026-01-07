@@ -28,8 +28,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16.x
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.2.4
+        with:
+          version: "7"
       - name: Install dependencies
-        run: yarn install --check-files --frozen-lockfile
+        run: pnpm i --frozen-lockfile
       - name: release
         run: npx projen release
       - name: Check for new commits
@@ -93,10 +97,14 @@ jobs:
       - name: Restore build artifact permissions
         run: cd dist && setfacl --restore=permissions-backup.acl
         continue-on-error: true
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.2.4
+        with:
+          version: "7"
       - name: Prepare Repository
         run: mv dist .repo
       - name: Install Dependencies
-        run: cd .repo && yarn install --check-files --frozen-lockfile
+        run: cd .repo && pnpm i --frozen-lockfile
       - name: Create js artifact
         run: cd .repo && npx projen package:js
       - name: Collect js Artifact

@@ -8,28 +8,48 @@ import { Construct } from 'constructs';
 
 export interface ScheduledNatGatewayProps {
   readonly publicSubnetId: string;
-  readonly privateSubnetId: string;
+  readonly privateSubnetIds: string[];
   readonly createSchedule: string;
   readonly deleteSchedule: string;
+  /**
+   * Optional prefix for resource names to avoid conflicts
+   * @default - No prefix
+   */
+  readonly namePrefix?: string;
+  /**
+   * Optional suffix for resource names to avoid conflicts
+   * @default - No suffix
+   */
+  readonly nameSuffix?: string;
 }
 
 export class ScheduledNatGateway extends Construct {
   constructor(scope: Construct, id: string, props: ScheduledNatGatewayProps) {
     super(scope, id);
 
+    const prefix = props.namePrefix || '';
+    const suffix = props.nameSuffix || '';
+    const baseName = 'scheduled-nat';
+
+    const functionName = `${prefix}${prefix ? '-' : ''}ScheduledNatGatewayFunction${suffix ? '-' : ''}${suffix}`;
+    const eipTagName = `${prefix}${prefix ? '-' : ''}${baseName}-eip${suffix ? '-' : ''}${suffix}`;
+    const natGatewayTagName = `${prefix}${prefix ? '-' : ''}${baseName}-gateway${suffix ? '-' : ''}${suffix}`;
+
     // Lambda function to create/delete the NAT Gateway
     const lambdaFn = new lambda.Function(this, 'ScheduledNatGatewayFunction', {
-      code: lambda.Code.fromAsset(path.join(__dirname, '../functions')),
+      functionName: functionName,
+      code: lambda.Code.fromAsset(path.join(__dirname, './functions')),
       handler: 'index.handler',
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_24_X,
       timeout: cdk.Duration.seconds(600),
       environment: {
         PUBLIC_SUBNET_ID: props.publicSubnetId,
-        PRIVATE_SUBNET_ID: props.privateSubnetId,
+        PRIVATE_SUBNET_IDS: props.privateSubnetIds.join(','),
+        EIP_TAG_NAME: eipTagName,
+        NAT_GATEWAY_TAG_NAME: natGatewayTagName,
       },
     });
 
-    // Grant the Lambda function the necessary permissions to create/delete the NAT Gateway
     lambdaFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['ec2:CreateNatGateway', 'ec2:DeleteNatGateway'],
@@ -71,8 +91,11 @@ export class ScheduledNatGateway extends Construct {
       }),
     );
     // CloudWatch Event Rule to trigger the Lambda function on a schedule
+    const createRuleName = `${prefix}${prefix ? '-' : ''}CreateNatGateway${suffix ? '-' : ''}${suffix}`;
+    const deleteRuleName = `${prefix}${prefix ? '-' : ''}DeleteNatGateway${suffix ? '-' : ''}${suffix}`;
+
     const rule = new events.Rule(this, 'ScheduledNatGatewayRule', {
-      ruleName: 'CreateNatGateway',
+      ruleName: createRuleName,
       schedule: events.Schedule.expression(`cron(${props.createSchedule})`),
     });
     rule.addTarget(
@@ -82,7 +105,7 @@ export class ScheduledNatGateway extends Construct {
     );
 
     const rule2 = new events.Rule(this, 'ScheduledNatGatewayRule2', {
-      ruleName: 'DeleteNatGateway',
+      ruleName: deleteRuleName,
       schedule: events.Schedule.expression(`cron(${props.deleteSchedule})`),
     });
     rule2.addTarget(

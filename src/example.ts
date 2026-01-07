@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { ScheduledNatGateway } from './index';
+import { ScheduledNatGateway } from "./index";
 
 const app = new cdk.App();
 const stack = new cdk.Stack(app, 'MyStack');
