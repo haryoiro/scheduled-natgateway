@@ -7,11 +7,11 @@ test('ScheduledNatGateway creates a CloudWatch Event Rule and Lambda Function wi
   const stack = new cdk.Stack(app, 'TestStack');
 
   const publicSubnetId = 'subnet-11111111';
-  const privateSubnetId = 'subnet-22222222';
+  const privateSubnetIds = ['subnet-22222222'];
 
   new ScheduledNatGateway(stack, 'TestScheduledNatGateway', {
     publicSubnetId: publicSubnetId,
-    privateSubnetId: privateSubnetId,
+    privateSubnetIds: privateSubnetIds,
     createSchedule: '0 8 * * ? *',
     deleteSchedule: '0 18 * * ? *',
   });
@@ -19,7 +19,7 @@ test('ScheduledNatGateway creates a CloudWatch Event Rule and Lambda Function wi
   const template = Template.fromStack(stack);
 
   template.hasResourceProperties('AWS::Lambda::Function', {
-    Runtime: 'nodejs18.x',
+    Runtime: 'nodejs24.x',
   });
   template.hasResourceProperties('AWS::Events::Rule', {
     ScheduleExpression: 'cron(0 8 * * ? *)',

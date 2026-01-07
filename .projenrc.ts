@@ -6,7 +6,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
   authorAddress: 'haryoiro@users.noreply.github.com',
   cdkVersion: '2.233.0',
   defaultReleaseBranch: 'main',
-  jsiiVersion: '~5.7.0',
+  jsiiVersion: '~5.9.0',
   name: '@haryoiro/scheduled-natgateway',
   projenrcTs: true,
   repositoryUrl: 'https://github.com/haryoiro/scheduled-natgateway.git',
