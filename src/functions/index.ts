@@ -11,6 +11,8 @@ import {
   ReplaceRouteCommand,
   waitUntilNatGatewayAvailable,
   waitUntilNatGatewayDeleted,
+  Address,
+  Route,
 } from "@aws-sdk/client-ec2";
 
 const ec2Client = new EC2Client({});
@@ -80,7 +82,7 @@ async function createNatGateway(publicSubnetId: string, eipTagName: string, natG
 
   let allocationId: string | undefined;
 
-  const unassociatedEips = addresses.filter(addr => !addr.AssociationId);
+  const unassociatedEips = addresses.filter((addr: Address) => !addr.AssociationId);
 
   if (unassociatedEips.length > 0) {
     if (unassociatedEips.length > 1) {
@@ -160,7 +162,7 @@ async function createNatGateway(publicSubnetId: string, eipTagName: string, natG
   return natGatewayId;
 }
 
-async function deleteNatGateway(publicSubnetId: string, eipTagName: string, natGatewayTagName: string): Promise<string> {
+async function deleteNatGateway(publicSubnetId: string, _eipTagName: string, _natGatewayTagName: string): Promise<string> {
   // Find the ID of the NAT Gateway in the subnet
   const describeNatGatewaysCommand = new DescribeNatGatewaysCommand({
     Filter: [
@@ -227,7 +229,7 @@ async function updateRouteTables(
     if (!routeTableId) continue;
 
     const existingRoute = routeTable.Routes?.find(
-      (route) => route.DestinationCidrBlock === "0.0.0.0/0"
+      (route: Route) => route.DestinationCidrBlock === "0.0.0.0/0"
     );
 
     if (isCreate) {
